@@ -1,8 +1,10 @@
 import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense, Activation
 from keras.layers import MaxPool2D
 from keras.layers import Conv2D
+from keras.layers import Input
+from keras.layers.convolutional import Cropping2D
+from keras.layers import Conv2DTranspose
+from keras.layers import concatenate
 from keras.models import Sequential
 from scipy import ndimage
 from matplotlib import pyplot as plt
@@ -21,33 +23,65 @@ def visualizeImgData():
 
 
 model = Sequential()
+inputs = Input((572, 572, 3))
 
 # Layer one - downsize
-model.add(Conv2D(64,(3,3), strides=(1,1), activation='relu', input_shape=(572, 572, 3)))
-model.add(Conv2D(64,(3,3), strides=(1,1), activation='relu'))
+conv1 = Conv2D(64,(3,3), strides=(1,1), activation='relu', input_shape=(572, 572, 3))(inputs)
+conv1 = Conv2D(64,(3,3), strides=(1,1), activation='relu')(conv1)
 
-model.add(MaxPool2D((2,2)))     # (284x284x64)
+pool1 = MaxPool2D((2,2), strides=2)(conv1)     # (284x284x64)
 
 # Layer two - downsize
-model.add(Conv2D(128,(3,3), strides=(1,1), activation='relu'))
-model.add(Conv2D(128,(3,3), strides=(1,1), activation='relu'))
+conv2 = Conv2D(128,(3,3), strides=(1,1), activation='relu')(pool1)
+conv2 = Conv2D(128,(3,3), strides=(1,1), activation='relu')(conv2)
 
-model.add(MaxPool2D((2,2)))     # (140x140x128)
+pool2 = MaxPool2D((2,2), strides=2)(conv2)     # (140x140x128)
 
 # Layer three - downsize
-model.add(Conv2D(256,(3,3), strides=(1,1), activation='relu'))
-model.add(Conv2D(256,(3,3), strides=(1,1), activation='relu'))
+conv3 = Conv2D(256,(3,3), strides=(1,1), activation='relu')(pool2)
+conv3 = Conv2D(256,(3,3), strides=(1,1), activation='relu')(conv3)
 
-model.add(MaxPool2D((2,2)))     # (68x68x256)
+pool3 = MaxPool2D((2,2), strides=2)(conv3)     # (68x68x256)
 
 # Layer four - downsize
-model.add(Conv2D(512,(3,3), strides=(1,1), activation='relu'))
-model.add(Conv2D(512,(3,3), strides=(1,1), activation='relu'))
+conv4 = Conv2D(512,(3,3), strides=(1,1), activation='relu')(pool3)
+conv4 = Conv2D(512,(3,3), strides=(1,1), activation='relu')(conv4)
 
-model.add(MaxPool2D((2,2)))     # (32x32x512)
+pool4 = MaxPool2D((2,2),strides=2)(conv4)     # (32x32x512)
 
 # Layer five - last layer of downsizing
-model.add(Conv2D(1024,(3,3), strides=(1,1), activation='relu'))
-model.add(Conv2D(1024,(3,3), strides=(1,1), activation='relu'))
+conv5 = Conv2D(1024,(3,3), strides=(1,1), activation='relu')(pool4)
+conv5 = Conv2D(1024,(3,3), strides=(1,1), activation='relu')(conv5)
 
-print(model.output_shape)
+# crop conv4 layer
+conv4Crop= tf.image.resize_image_with_crop_or_pad(conv4, 56,56)
+up6 = concatenate([Conv2DTranspose(512, (2, 2), strides=(2, 2))(conv5), conv4Crop], axis=3)
+
+# Layer six - upsizing
+conv6 = Conv2D(512,(3,3), strides=(1,1), activation='relu')(up6)
+conv6 = Conv2D(512,(3,3), strides=(1,1), activation='relu')(conv6)
+
+# crop conv3 layer
+conv3Crop= tf.image.resize_image_with_crop_or_pad(conv3, 104,104)
+up7 = concatenate([Conv2DTranspose(256, (2, 2), strides=(2, 2))(conv6), conv3Crop], axis=3)
+
+# Layer seven - upsizing
+conv7 = Conv2D(256,(3,3), strides=(1,1), activation='relu')(up7)
+conv7 = Conv2D(256,(3,3), strides=(1,1), activation='relu')(conv7)
+
+# crop conv2 layer
+conv2Crop= tf.image.resize_image_with_crop_or_pad(conv2, 200,200)
+up8 = concatenate([Conv2DTranspose(128, (2, 2), strides=(2, 2))(conv7), conv2Crop], axis=3)
+
+# Layer eight - upsizing
+conv8 = Conv2D(128,(3,3), strides=(1,1), activation='relu')(up8)
+conv8 = Conv2D(128,(3,3), strides=(1,1), activation='relu')(conv8)
+
+# crop conv1 layer
+conv1Crop= tf.image.resize_image_with_crop_or_pad(conv1, 392,392)
+up9 = concatenate([Conv2DTranspose(64, (2, 2), strides=(2, 2))(conv8), conv1Crop], axis=3)
+
+# Layer nine - upsizing final layer
+conv9 = Conv2D(64,(3,3), strides=(1,1), activation='relu')(up9)
+conv9 = Conv2D(64,(3,3), strides=(1,1), activation='relu')(conv9)
+conv9 = Conv2D(2, (1,1), strides=(1,1))(conv9)
