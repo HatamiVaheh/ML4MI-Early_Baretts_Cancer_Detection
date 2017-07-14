@@ -2,7 +2,7 @@
 Early Barett's cancer detection sub challenge - MICCAI 2015
 
 
-Image folder hierarchy for this to work: <br />
+<b>Image folder hierarchy</b> for this to work: <br />
 image/<br />
       training_images/ <br />
             # Your training samples go here <br />
