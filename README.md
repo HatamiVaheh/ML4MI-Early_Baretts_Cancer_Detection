@@ -3,10 +3,10 @@ Early Barett's cancer detection sub challenge - MICCAI 2015
 
 
 Image folder hierarchy for this to work:
-image/
-      training_images/ 
-            # Your training samples go here
-      annotations_image/
-            # annotated images (masks) go here
-      average_label
-            # average label is computed here
+image/<br />
+      training_images/ <br />
+            # Your training samples go here <br />
+      annotations_image/ <br />
+            # annotated images (masks) go here <br />
+      average_label <br />
+            # average label is computed here <br />
