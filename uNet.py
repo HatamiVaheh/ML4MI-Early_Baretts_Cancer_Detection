@@ -9,6 +9,8 @@ from keras.models import Model
 from scipy import ndimage
 from matplotlib import pyplot as plt
 from keras.optimizers import Adam
+from keras import backend as K
+from keras.callbacks import ModelCheckpoint
 
 
 imgData = ndimage.imread("image/sample image.jpg")
@@ -21,6 +23,18 @@ def visualizeImgData():
     plt.show()
 
 #visualizeImgData()
+
+
+smooth = 1
+def dice_coef(y_true, y_pred):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)
 
 
 def get_Unet():
@@ -84,15 +98,22 @@ def get_Unet():
     # Layer nine - upsizing final layer
     conv9 = Conv2D(64,(3,3), strides=(1,1), activation='relu')(up9)
     conv9 = Conv2D(64,(3,3), strides=(1,1), activation='relu')(conv9)
-    conv9 = Conv2D(2, (1,1), strides=(1,1))(conv9)
+    #conv9 = Conv2D(2, (1,1), strides=(1,1))(conv9)
+    conv10 = Conv2D(2, (1, 1), activation='sigmoid')(conv9)
 
-    model = Model(inputs=[inputs], outputs=[conv9])
-    model.compile(optimizer=Adam(lr=1e-5), loss="mean_squared_error")
+    print("input")
+    print(inputs)
+    print(conv10)
+
+    model = Model(inputs=[inputs], outputs=[conv10])
+    model.compile(optimizer=Adam(lr=1e-5), loss=dice_coef_loss, metrics=[dice_coef])
     return model
 
 
 
 if __name__ == "__main__":
-    pass
     #to train the model
-    #get_Unet().fit()
+    model = get_Unet()
+    model.load_weights('weights.h5')
+    model_checkpoint = ModelCheckpoint('weights.h5', monitor='val_loss', save_best_only=True)
+    model.fit(imgData, imgData, batch_size=1, epochs=1, verbose=1, callbacks=[model_checkpoint])
