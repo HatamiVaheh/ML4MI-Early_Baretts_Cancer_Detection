@@ -16,7 +16,7 @@ import scipy.io as sio
 
 #Path to the images, annotation maps
 
-path_data = 'img/'
+path_data = 'image/'
 
 raw_img_rows, raw_img_cols = 1200, 1600
 Num_imgs = 1
@@ -25,13 +25,13 @@ channels = 3
 
 def train_data():
     # start of by training only on 1 image
-    initial_training_path = os.path.join(path_data, 'train_1_image')
-    initial_annot_path = os.path.join(path_data, 'annot_1_image')
+    initial_training_path = os.path.join(path_data, 'training_images')
+    #initial_annot_path = os.path.join(path_data, 'annot_1_image')
     # TODO for the major training we will initialize a different path that contains all of the training set
     #train_path = os.path.join(path_data, 'train_set')
 
     first_img = os.listdir(initial_training_path)
-    first_annot = os.listdir(initial_annot_path)
+    #first_annot = os.listdir(initial_annot_path)
     #total = len(first_img)/2
 
     # creating a 3D matrix with 1 image, with given pixels, first element number of columns, 2nd number of rows, 3rd RGB
@@ -83,7 +83,7 @@ train_data()
 
 
 print(np.load(('imgs_train.npy'))[0].shape)
-print(sio.loadmat('img/annot_1_image/pat19_im1_NDBT.mat'))
+#print(sio.loadmat('img/annot_1_image/pat19_im1_NDBT.mat'))
 #plt.imshow(np.load('imgs_train.npy')[0])
 #plt.imshow(np.load('imgs__annot.npy')[0])
 #plt.show()
